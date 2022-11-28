@@ -2,6 +2,11 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <glm/fwd.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <iostream>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -17,7 +22,6 @@ const char *TITLE = "OpenGL Shenanigans";
 
 int main()
 {
-
     //  ..:: INIT ::..
     // -----------------------------------------------------------------------
     glfwInit();
@@ -144,7 +148,17 @@ int main()
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_BINDING_2D, texture);
 
+        // create transformation
+        glm::mat4 transform = glm::mat4(1.0f);
+        transform = glm::translate(transform, glm::vec3(0.5, -0.5f, 0.0f));
+        transform = glm::rotate(transform, (float)glfwGetTime(),
+                                glm::vec3(0.0f, 0.0f, 1.0f));
+
         shader.use();
+        unsigned int tLoc = glGetUniformLocation(shader.ID, "transform");
+        glUniformMatrix4fv(tLoc, 1, GL_FALSE, glm::value_ptr(transform));
+
+        // render
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
