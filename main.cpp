@@ -55,6 +55,10 @@ int main()
         return -1;
     }
 
+    // configure global opengl state
+    // -----------------------------
+    glEnable(GL_DEPTH_TEST);
+
     //  ..:: SHADERS ::..
     // -----------------------------------------------------------------------
     Shader shader("shaders/vertex.vs", "shaders/fragment.fs");
@@ -62,22 +66,56 @@ int main()
     //  ..:: VERTICES ::..
     // -----------------------------------------------------------------------
     float vertices[] = {
-        // position         // texture coords
-        0.5f,  0.5f,  0.0f, 1.0f, 1.0f, // top right
-        0.5f,  -0.5f, 0.0f, 1.0f, 0.0f, // bot right
-        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, // bot left
-        -0.5f, 0.5f,  0.0f, 0.0f, 1.0f  // top left
-    };
-    unsigned int indices[] = {
-        0, 1, 3, // first triangle
-        1, 2, 3  // second triangle
+        // position          // texture
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //
+        0.5f,  -0.5f, -0.5f, 1.0f, 0.0f, //
+        0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
+        0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
+        -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, //
+        -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //
+        -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
+        0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f, //
+        0.5f,  0.5f,  0.5f,  1.0f, 1.0f, //
+        -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, //
+        -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
+        -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, //
+        -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f, //
+        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
+        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
+        -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
+        -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, //
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
+        0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
+        0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, //
+        0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, //
+        0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, //
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
+        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
+        0.5f,  -0.5f, -0.5f, 1.0f, 1.0f, //
+        0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
+        0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
+        -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
+        -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
+        -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, //
+        0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
+        0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
+        -0.5f, 0.5f,  0.5f,  0.0f, 0.0f, //
+        -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f  //
     };
 
+    glm::vec3 cubePositions[] = {
+        glm::vec3(0.0f, 0.0f, 0.0f),    glm::vec3(2.0f, 5.0f, -15.0f),
+        glm::vec3(-1.5f, -2.2f, -2.5f), glm::vec3(-3.8f, -2.0f, -12.3f),
+        glm::vec3(2.4f, -0.4f, -3.4f),  glm::vec3(-1.7f, 3.0f, -7.5f),
+        glm::vec3(1.3f, -2.0f, -2.5f),  glm::vec3(1.5f, 2.0f, -2.5f),
+        glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f, -1.5f)};
+
     // generating a unique buffer IDs
-    unsigned int VBO, VAO, EBO;
+    unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
 
     // bind vertex array object first, then set vertex buffers and configure
     // vertex attribs
@@ -85,10 +123,6 @@ int main()
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-                 GL_STATIC_DRAW);
 
     // position attributes
     glVertexAttribPointer(
@@ -147,7 +181,7 @@ int main()
 
         // rendering loop
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // bind textures to corresponding texture units
         glActiveTexture(GL_TEXTURE0);
@@ -156,32 +190,28 @@ int main()
         shader.use();
 
         // create transformations
-        glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 view = glm::mat4(1.0f);
         glm::mat4 projection = glm::mat4(1.0f);
+        glm::mat4 view = glm::mat4(1.0f);
 
-        model = glm::rotate(model, glm::radians(-55.0f),
-                            glm::vec3(1.0f, 0.0f, 0.0f));
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
         projection = glm::perspective(glm::radians(45.0f),
                                       (float)SCR_WIDTH / (float)SCR_HEIGHT,
                                       0.1f, 100.0f);
+        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 
-        // matrix uniform locations
-        unsigned int modelLocation = glGetUniformLocation(shader.ID, "model");
-        unsigned int viewLocation = glGetUniformLocation(shader.ID, "view");
-
-        // pass locations to shaders
-        glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
-        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
-
-        // note: currently, we set the projection matrix each frame, but since
-        // the projection matrix rarely changes, it's best practice to set it
-        // once outside the main loop
         shader.setMat4("projection", projection);
+        shader.setMat4("view", view);
 
         glBindVertexArray(VAO);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        for (unsigned int i = 0; i < 10; i++) {
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, cubePositions[i]);
+            float angle = 20.0f * i;
+            model = glm::rotate(model, glm::radians(angle),
+                                glm::vec3(1.0f, 0.3f, 0.5f));
+            shader.setMat4("model", model);
+
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
 
         // end rendering loop
         glfwSwapBuffers(window);
@@ -191,7 +221,6 @@ int main()
     // cleanup all resources
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
 
     // terminate GLFW (this will also clean up all resources, making the
     // previous step optional)
