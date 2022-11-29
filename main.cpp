@@ -1,7 +1,21 @@
+// Projections
+//
+// Make it Cubes ... that roll!
+//
+// https://learnopengl.com/Getting-started/Coordinate-Systems
+// http://www.songho.ca/opengl/gl_projectionmatrix.html
+
 // These have to be in this order, don't change!
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include <glm/ext/matrix_clip_space.hpp>
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
+#include <glm/trigonometric.hpp>
 #include <iostream>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -48,11 +62,11 @@ int main()
     //  ..:: VERTICES ::..
     // -----------------------------------------------------------------------
     float vertices[] = {
-        // position         // color          // texture coords
-        0.5f,  0.5f,  0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, // top right
-        0.5f,  -0.5f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f, 0.0f, // bot right
-        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // bot left
-        -0.5f, 0.5f,  0.0f, 1.0f, 1.0f, 0.0f, 0.0f, 1.0f  // top left
+        // position         // texture coords
+        0.5f,  0.5f,  0.0f, 1.0f, 1.0f, // top right
+        0.5f,  -0.5f, 0.0f, 1.0f, 0.0f, // bot right
+        -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, // bot left
+        -0.5f, 0.5f,  0.0f, 0.0f, 1.0f  // top left
     };
     unsigned int indices[] = {
         0, 1, 3, // first triangle
@@ -82,20 +96,15 @@ int main()
         3,                 // size of the vertex attribute (vec3 => 3 elements)
         GL_FLOAT,          // type of data in the vertex
         GL_FALSE,          // normalise input data?
-        8 * sizeof(float), // stride
+        5 * sizeof(float), // stride
         (void *)0          // offset of position data in buffer
     );
     glEnableVertexAttribArray(0);
 
-    // color attributes
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
+    // texture attributes
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float),
                           (void *)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
-
-    // texture attributes
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float),
-                          (void *)(6 * sizeof(float)));
-    glEnableVertexAttribArray(2);
 
     //  ..:: TEXTURES ::..
     // -----------------------------------------------------------------------
@@ -145,6 +154,32 @@ int main()
         glBindTexture(GL_TEXTURE_BINDING_2D, texture);
 
         shader.use();
+
+        // create transformations
+        glm::mat4 model = glm::mat4(1.0f);
+        glm::mat4 view = glm::mat4(1.0f);
+        glm::mat4 projection = glm::mat4(1.0f);
+
+        model = glm::rotate(model, glm::radians(-55.0f),
+                            glm::vec3(1.0f, 0.0f, 0.0f));
+        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        projection = glm::perspective(glm::radians(45.0f),
+                                      (float)SCR_WIDTH / (float)SCR_HEIGHT,
+                                      0.1f, 100.0f);
+
+        // matrix uniform locations
+        unsigned int modelLocation = glGetUniformLocation(shader.ID, "model");
+        unsigned int viewLocation = glGetUniformLocation(shader.ID, "view");
+
+        // pass locations to shaders
+        glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(model));
+        glUniformMatrix4fv(viewLocation, 1, GL_FALSE, &view[0][0]);
+
+        // note: currently, we set the projection matrix each frame, but since
+        // the projection matrix rarely changes, it's best practice to set it
+        // once outside the main loop
+        shader.setMat4("projection", projection);
+
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
