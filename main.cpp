@@ -18,8 +18,11 @@
 
 #include <glm/trigonometric.hpp>
 #include <iostream>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+#include "camera.h"
 #include "shader.h"
 
 void framebuffer_size_callback(GLFWwindow *, int, int);
@@ -28,22 +31,16 @@ void mouse_callback(GLFWwindow *, double, double);
 void scroll_callback(GLFWwindow *, double, double);
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1200;
+const unsigned int SCR_HEIGHT = 900;
 const char *TITLE = "OpenGL Shenanigans";
 
 // camera
-glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
-glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 
 bool firstMouse = true;
-float yaw = 90.0f;
-float pitch = 0.0f;
 float lastMouseX = (float)SCR_WIDTH / 2.0f;
 float lastMouseY = (float)SCR_HEIGHT / 2.0f;
-
-float fov = 45.0f;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -70,6 +67,9 @@ int main()
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
+    // mouse capture
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
     // glad: load OpenGL function pointers
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cout << "Failed to initialize GLAD" << std::endl;
@@ -79,7 +79,6 @@ int main()
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     //  ..:: SHADERS ::..
     // -----------------------------------------------------------------------
@@ -95,30 +94,35 @@ int main()
         0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
         -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, //
         -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //
+
         -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
         0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
         0.5f,  0.5f,  0.5f,  1.0f, 1.0f, //
         0.5f,  0.5f,  0.5f,  1.0f, 1.0f, //
         -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, //
         -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
+
         -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, //
         -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f, //
         -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
         -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
         -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
         -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, //
+
         0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
         0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
         0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, //
         0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, //
         0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, //
         0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
+
         -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
         0.5f,  -0.5f, -0.5f, 1.0f, 1.0f, //
         0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
         0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
         -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
         -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
+
         -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, //
         0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
         0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
@@ -195,13 +199,14 @@ int main()
     shader.use();
     shader.setInt("texContainer", 0);
 
-    glm::mat4 projection = glm::mat4(1.0f);
-    projection = glm::perspective(
-        glm::radians(fov), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-
     //  ..:: RENDER LOOP ::..
     // -----------------------------------------------------------------------
     while (!glfwWindowShouldClose(window)) {
+        // per frame time logic
+        float currentFrame = static_cast<float>(glfwGetTime());
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
         // catch input
         processInput(window);
 
@@ -215,14 +220,11 @@ int main()
 
         shader.use();
 
-        float currentFrame = glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
-
-        glm::mat4 view;
-        view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-
+        glm::mat4 projection = glm::perspective(
+            glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT,
+            0.1f, 100.0f);
         shader.setMat4("projection", projection);
+        glm::mat4 view = camera.GetViewMatrix();
         shader.setMat4("view", view);
 
         glBindVertexArray(VAO);
@@ -264,15 +266,13 @@ void processInput(GLFWwindow *window)
 
     float cameraSpeed = 2.5f * deltaTime;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        cameraPos += cameraSpeed * cameraFront;
+        camera.ProcessKeyboard(FORWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cameraPos -= cameraSpeed * cameraFront;
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cameraPos +=
-            glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+        camera.ProcessKeyboard(RIGHT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        cameraPos -=
-            glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+        camera.ProcessKeyboard(LEFT, deltaTime);
 }
 
 void mouse_callback(GLFWwindow *window, double xPosIn, double yPosIn)
@@ -293,31 +293,10 @@ void mouse_callback(GLFWwindow *window, double xPosIn, double yPosIn)
     lastMouseX = xPos;
     lastMouseY = yPos;
 
-    // const float sensitivity = 0.001f;
-    // xOffset *= sensitivity;
-    // yOffset *= sensitivity;
-
-    yaw += xOffset;
-    pitch += yOffset;
-
-    if (pitch > 89.0f)
-        pitch = 89.0f;
-    if (pitch < -89.0f)
-        pitch = -89.0f;
-
-    glm::vec3 front;
-    front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    front.y = sin(glm::radians(pitch));
-    front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    cameraFront = glm::normalize(front);
+    camera.ProcessMouseMovement(xOffset, yOffset);
 }
 
-void scroll_callback(GLFWwindow *window, double xOffset, double yOffset)
+void scroll_callback(GLFWwindow *window, double _xOffset, double yOffset)
 {
-
-    fov -= (float)yOffset;
-    if (fov < 1.0f)
-        fov = 1.0f;
-    if (fov > 45.0f)
-        fov = 45.0f;
+    camera.ProcessMouseScroll(static_cast<float>(yOffset));
 }
