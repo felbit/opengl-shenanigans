@@ -6,6 +6,7 @@
 // http://www.songho.ca/opengl/gl_projectionmatrix.html
 
 // These have to be in this order, don't change!
+#include <cmath>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -17,17 +18,32 @@
 
 #include <glm/trigonometric.hpp>
 #include <iostream>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+
+#include "camera.h"
 #include "shader.h"
 
-void framebuffer_size_callback(GLFWwindow *window, int width, int height);
-void processInput(GLFWwindow *window);
+void framebuffer_size_callback(GLFWwindow *, int, int);
+void processInput(GLFWwindow *);
+void mouse_callback(GLFWwindow *, double, double);
+void scroll_callback(GLFWwindow *, double, double);
 
 // settings
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1200;
+const unsigned int SCR_HEIGHT = 900;
 const char *TITLE = "OpenGL Shenanigans";
+
+// camera
+Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+bool firstMouse = true;
+float lastMouseX = (float)SCR_WIDTH / 2.0f;
+float lastMouseY = (float)SCR_HEIGHT / 2.0f;
+
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
 
 int main()
 {
@@ -48,6 +64,11 @@ int main()
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+
+    // mouse capture
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load OpenGL function pointers
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -73,30 +94,35 @@ int main()
         0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
         -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, //
         -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, //
+
         -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
         0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
         0.5f,  0.5f,  0.5f,  1.0f, 1.0f, //
         0.5f,  0.5f,  0.5f,  1.0f, 1.0f, //
         -0.5f, 0.5f,  0.5f,  0.0f, 1.0f, //
         -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
+
         -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, //
         -0.5f, 0.5f,  -0.5f, 1.0f, 1.0f, //
         -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
         -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
         -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
         -0.5f, 0.5f,  0.5f,  1.0f, 0.0f, //
+
         0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
         0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
         0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, //
         0.5f,  -0.5f, -0.5f, 0.0f, 1.0f, //
         0.5f,  -0.5f, 0.5f,  0.0f, 0.0f, //
         0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
+
         -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
         0.5f,  -0.5f, -0.5f, 1.0f, 1.0f, //
         0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
         0.5f,  -0.5f, 0.5f,  1.0f, 0.0f, //
         -0.5f, -0.5f, 0.5f,  0.0f, 0.0f, //
         -0.5f, -0.5f, -0.5f, 0.0f, 1.0f, //
+
         -0.5f, 0.5f,  -0.5f, 0.0f, 1.0f, //
         0.5f,  0.5f,  -0.5f, 1.0f, 1.0f, //
         0.5f,  0.5f,  0.5f,  1.0f, 0.0f, //
@@ -176,6 +202,11 @@ int main()
     //  ..:: RENDER LOOP ::..
     // -----------------------------------------------------------------------
     while (!glfwWindowShouldClose(window)) {
+        // per frame time logic
+        float currentFrame = static_cast<float>(glfwGetTime());
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
         // catch input
         processInput(window);
 
@@ -189,16 +220,11 @@ int main()
 
         shader.use();
 
-        // create transformations
-        glm::mat4 projection = glm::mat4(1.0f);
-        glm::mat4 view = glm::mat4(1.0f);
-
-        projection = glm::perspective(glm::radians(45.0f),
-                                      (float)SCR_WIDTH / (float)SCR_HEIGHT,
-                                      0.1f, 100.0f);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-
+        glm::mat4 projection = glm::perspective(
+            glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT,
+            0.1f, 100.0f);
         shader.setMat4("projection", projection);
+        glm::mat4 view = camera.GetViewMatrix();
         shader.setMat4("view", view);
 
         glBindVertexArray(VAO);
@@ -237,4 +263,40 @@ void processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+
+    float cameraSpeed = 2.5f * deltaTime;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.ProcessKeyboard(FORWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.ProcessKeyboard(RIGHT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.ProcessKeyboard(LEFT, deltaTime);
+}
+
+void mouse_callback(GLFWwindow *window, double xPosIn, double yPosIn)
+{
+    float xPos = static_cast<float>(xPosIn);
+    float yPos = static_cast<float>(yPosIn);
+
+    if (firstMouse) {
+        lastMouseX = xPos;
+        lastMouseY = yPos;
+        firstMouse = false;
+    }
+
+    float xOffset = xPos - lastMouseX;
+    float yOffset = lastMouseY - yPos; // reversed: y-coords range
+                                       // from bottom to top!
+
+    lastMouseX = xPos;
+    lastMouseY = yPos;
+
+    camera.ProcessMouseMovement(xOffset, yOffset);
+}
+
+void scroll_callback(GLFWwindow *window, double _xOffset, double yOffset)
+{
+    camera.ProcessMouseScroll(static_cast<float>(yOffset));
 }
