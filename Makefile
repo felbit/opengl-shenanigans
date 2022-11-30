@@ -2,15 +2,10 @@ CC = g++
 
 CFLAGS = -g -Wall
 
-TARGET = hellogl
+all: basics
 
-all: $(TARGET)
-
-$(TARGET): main.cpp glad.c
-	$(CC) $(CFLAGS) -o $(TARGET) main.cpp glad.c -lglfw -lGL
-
-run: $(TARGET)
-	./$(TARGET)
+basics: basics/main.cpp misc/glad.c
+	$(CC) $(CFLAGS) -o basics/basics basics/main.cpp misc/glad.c -lglfw -lGL
 
 clean:
-	rm $(TARGET)
+	rm basics

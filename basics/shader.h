@@ -23,6 +23,9 @@ class Shader
         std::ifstream vShaderFile;
         std::ifstream fShaderFile;
 
+        std::cout << "Vertex path: " << vertexPath << std::endl;
+        std::cout << "Fragment path: " << fragmentPath << std::endl;
+
         // ensure ifstream objects can throw
         vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
         fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
