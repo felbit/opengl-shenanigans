@@ -9,11 +9,12 @@
 
 void framebuffer_size_callback(GLFWwindow *, int, int);
 void processInput(GLFWwindow *);
+void keyboardCallback(GLFWwindow *, int, int, int, int);
 void mouse_callback(GLFWwindow *, double, double);
 void scroll_callback(GLFWwindow *, double, double);
 
 // window settings
-const unsigned int SCR_WIDTH = 1200;
+const unsigned int SCR_WIDTH = 1600;
 const unsigned int SCR_HEIGHT = 900;
 const char *TITLE = "Colors & Lighting :: OpenGL";
 
@@ -22,6 +23,11 @@ Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
 float lastX = (float)SCR_WIDTH / 2.0f;
 float lastY = (float)SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
+
+bool moveForward = false;
+bool moveBackward = false;
+bool moveLeft = false;
+bool moveRight = false;
 
 // timing
 float deltaTime = 0.0f;
@@ -49,10 +55,12 @@ int main()
     // ..:: OPENGL CONTEXT ::..
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetKeyCallback(window, keyboardCallback);
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
     glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
         std::cerr << "Failed to initialize GLAD!" << std::endl;
@@ -170,18 +178,39 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
+void keyboardCallback(GLFWwindow *window, int key, int scancode, int action,
+                      int mods)
+{
+    if (key == GLFW_KEY_W && action == GLFW_PRESS)
+        moveForward = true;
+    if (key == GLFW_KEY_W && action == GLFW_RELEASE)
+        moveForward = false;
+    if (key == GLFW_KEY_S && action == GLFW_PRESS)
+        moveBackward = true;
+    if (key == GLFW_KEY_S && action == GLFW_RELEASE)
+        moveBackward = false;
+    if (key == GLFW_KEY_A && action == GLFW_PRESS)
+        moveLeft = true;
+    if (key == GLFW_KEY_A && action == GLFW_RELEASE)
+        moveLeft = false;
+    if (key == GLFW_KEY_D && action == GLFW_PRESS)
+        moveRight = true;
+    if (key == GLFW_KEY_D && action == GLFW_RELEASE)
+        moveRight = false;
+}
+
 void processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    if (moveForward)
         camera.ProcessKeyboard(FORWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+    if (moveBackward)
         camera.ProcessKeyboard(BACKWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+    if (moveLeft)
         camera.ProcessKeyboard(LEFT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+    if (moveRight)
         camera.ProcessKeyboard(RIGHT, deltaTime);
 }
 
