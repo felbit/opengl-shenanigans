@@ -20,10 +20,10 @@
 #include <iostream>
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "../includes/stb_image.h"
 
-#include "camera.h"
-#include "shader.h"
+#include "../includes/camera.h"
+#include "../includes/shader.h"
 
 void framebuffer_size_callback(GLFWwindow *, int, int);
 void processInput(GLFWwindow *);
@@ -138,7 +138,7 @@ int main()
         glm::vec3(1.3f, -2.0f, -2.5f),  glm::vec3(1.5f, 2.0f, -2.5f),
         glm::vec3(1.5f, 0.2f, -1.5f),   glm::vec3(-1.3f, 1.0f, -1.5f)};
 
-    // generating a unique buffer IDs
+    // generating unique buffer IDs
     unsigned int VBO, VAO;
     glGenVertexArrays(1, &VAO);
     glGenBuffers(1, &VBO);
