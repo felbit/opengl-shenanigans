@@ -2,13 +2,17 @@ CC = g++
 
 CFLAGS = -g -Wall
 
-all: basics
+cpp_files := $(wildcard *.cpp)
+hpp_files := $(wildcard *.hpp)
 
-basics: basics/main.cpp misc/glad.c
-	$(CC) $(CFLAGS) -o basics/out basics/main.cpp misc/glad.c includes/* -lglfw -lGL
+all: bin/opengl
 
-lighting: lighting/main.cpp misc/glad.c
-	$(CC) $(CFLAGS) -o lighting/out lighting/main.cpp misc/glad.c includes/* -lglfw -lGL
+bin/opengl: $(cpp_files) $(hpp_files)
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -o $@ src/main.cpp libs/glad.c -lglfw -lGL
+
+run: bin/opengl
+	@cd bin/ && ./opengl && cd ..
 
 clean:
-	rm basics/out lighting/out
+	rm -Rf bin/

@@ -1,4 +1,11 @@
-Just playing around with OpenGL, roughly following the book [LearnOpenGL](https://learnopengl.com).
+Just playing around with OpenGL, roughly following the books [LearnOpenGL](https://learnopengl.com) and [open.gl]().
+
+## Build & Run
+
+```sh
+$ make
+$ make run
+```
 
 ## Build requirements
 
@@ -13,4 +20,4 @@ Note: I only tried this under Linux (with Wayland). Under Mac or Windows you are
 - generate the header and c files here: [https://gen.glad.sh/]()
 - download; unzip
 - move headers to include directory
-- copy glad.c to project directory
+- copy glad.c to libs directory (not needed anymore, I'll ship it now; maybe for updates)

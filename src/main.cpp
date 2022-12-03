@@ -4,8 +4,8 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
-#include "../includes/camera.h"
-#include "../includes/shader.h"
+#include "camera.hpp"
+#include "shader.hpp"
 
 void framebuffer_size_callback(GLFWwindow *, int, int);
 void processInput(GLFWwindow *);
@@ -72,8 +72,10 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
     // ..:: SHADERS ::..
-    Shader cubeShader("cube_vs.glsl", "cube_fs.glsl");
-    Shader lightSourceShader("light_source_vs.glsl", "light_source_fs.glsl");
+    Shader cubeShader("../src/shaders/cube_vs.glsl",
+                      "../src/shaders/cube_fs.glsl");
+    Shader lightSourceShader("../src/shaders/light_source_vs.glsl",
+                             "../src/shaders/light_source_fs.glsl");
 
     // ..:: VERTICES ::..
     float vertices[] = {
