@@ -1,5 +1,9 @@
 Just playing around with OpenGL, roughly following the books [LearnOpenGL](https://learnopengl.com) and [open.gl]().
 
+## Screenshot (current state)
+
+![screenshot](screenshots/materials.png)
+
 ## Build & Run
 
 ```sh
