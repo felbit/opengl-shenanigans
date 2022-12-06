@@ -1,7 +1,8 @@
 #version 330 core
+out vec4 FragColor;
+
 struct Material {
-    vec3 ambient;
-    vec3 diffuse;
+    sampler2D diffuse;
     vec3 specular;
     float shininess;
 };
@@ -16,18 +17,17 @@ struct Light {
 
 in vec3 FragPos;
 in vec3 Normal;
+in vec2 TexCoords;
 
-out vec4 FragColor;
-
+uniform vec3 viewPos;
 uniform Material material;
 uniform Light light;
 
-uniform vec3 viewPos;
 
 void main()
 {
     // ambient 
-    vec3 ambient = light.ambient * material.ambient;
+    vec3 ambient = light.ambient * texture(material.diffuse, TexCoords).rgb;
 
     // diffuse 
     // when calculating lightning, magnitude or position of vectors don't 
@@ -38,7 +38,7 @@ void main()
 
     // calculate diffuse impact of the light on the current fragment
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * (diff * material.diffuse);
+    vec3 diffuse = light.diffuse * diff * texture(material.diffuse, TexCoords).rgb;
 
     // specular 
     vec3 viewDir = normalize(viewPos - FragPos);
