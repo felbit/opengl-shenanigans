@@ -9,6 +9,7 @@ struct Material {
 
 struct Light {
     vec3 position;
+    vec3 direction; // for "sun-light"
 
     vec3 ambient;
     vec3 diffuse;
@@ -34,7 +35,7 @@ void main()
     // matter; only direction is important 
     // => All calculations can be done with unit vectors (much simpler!)
     vec3 norm = normalize(Normal);
-    vec3 lightDir = normalize(light.position - FragPos);
+    vec3 lightDir = normalize(-light.direction);
 
     // calculate diffuse impact of the light on the current fragment
     float diff = max(dot(norm, lightDir), 0.0);

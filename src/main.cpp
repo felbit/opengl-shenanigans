@@ -125,6 +125,21 @@ int main()
     Shader lightSourceShader("../src/shaders/light_source_vs.glsl", "../src/shaders/light_source_fs.glsl");
 
     // ..:: VERTICES ::..
+    // clang-format off
+    glm::vec3 cubePositions[] = {
+        glm::vec3( 0.0f,  0.0f,   0.0f),
+        glm::vec3( 2.0f,  5.0f, -15.0f),
+        glm::vec3(-1.5f, -2.2f,  -2.5f),
+        glm::vec3(-3.8f, -2.0f, -12.3f),
+        glm::vec3( 2.4f, -0.4f,  -3.5f),
+        glm::vec3(-1.7f,  3.0f,  -7.5f),
+        glm::vec3( 1.3f, -2.0f,  -2.5f),
+        // glm::vec3( 1.5f,  2.0f,  -2.5f),
+        glm::vec3( 1.5f,  0.2f,  -1.5f),
+        glm::vec3(-1.3f,  1.0f,  -1.5f)
+    };
+    // clang-format on
+
     unsigned int VBO, cubeVAO;
     glGenVertexArrays(1, &cubeVAO);
     glGenBuffers(1, &VBO);
@@ -180,13 +195,12 @@ int main()
 
         // activate shader and set uniform and drawing objects
         cubeShader.use();
-        // cubeShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
-        // cubeShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
         cubeShader.setFloat("material.shininess", 64.0f);
 
         cubeShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
         cubeShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
         cubeShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+        cubeShader.setVec3("light.direction", -0.2f, -1.0f, -0.3f);
         cubeShader.setVec3("light.position", lightPos);
 
         cubeShader.setVec3("viewPos", camera.Position);
@@ -199,10 +213,6 @@ int main()
         glm::mat4 view = camera.GetViewMatrix();
         cubeShader.setMat4("view", view);
 
-        // world transformation
-        glm::mat4 model = glm::mat4(1.0f);
-        cubeShader.setMat4("model", model);
-
         // bin texture
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, diffuseMap);
@@ -210,9 +220,18 @@ int main()
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, specularMap);
 
-        // render the cube
+        // world transformation
+        glm::mat4 model = glm::mat4(1.0f);
         glBindVertexArray(cubeVAO);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        for (unsigned int i = 0; i < 9; i++) {
+            model = glm::translate(model, cubePositions[i]);
+            float angle = 20.0f * i;
+            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            cubeShader.setMat4("model", model);
+            // render the cube
+            glDrawArrays(GL_TRIANGLES, 0, 36);
+        }
 
         // draw lamp
         lightSourceShader.use();
