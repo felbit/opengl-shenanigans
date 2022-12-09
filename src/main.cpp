@@ -134,7 +134,7 @@ int main()
         glm::vec3( 2.4f, -0.4f,  -3.5f),
         glm::vec3(-1.7f,  3.0f,  -7.5f),
         glm::vec3( 1.3f, -2.0f,  -2.5f),
-        // glm::vec3( 1.5f,  2.0f,  -2.5f),
+        glm::vec3( 1.5f,  2.0f,  -2.5f),
         glm::vec3( 1.5f,  0.2f,  -1.5f),
         glm::vec3(-1.3f,  1.0f,  -1.5f)
     };
@@ -195,15 +195,19 @@ int main()
 
         // activate shader and set uniform and drawing objects
         cubeShader.use();
-        cubeShader.setFloat("material.shininess", 64.0f);
+        cubeShader.setVec3("viewPos", camera.Position);
+        cubeShader.setVec3("light.position", lightPos);
+        // cubeShader.setVec3("light.direction", -0.2f, -1.0f, -0.3f);
+
+        cubeShader.setFloat("material.shininess", 32.0f);
 
         cubeShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
         cubeShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
         cubeShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-        cubeShader.setVec3("light.direction", -0.2f, -1.0f, -0.3f);
-        cubeShader.setVec3("light.position", lightPos);
 
-        cubeShader.setVec3("viewPos", camera.Position);
+        cubeShader.setFloat("light.constant", 1.0f);
+        cubeShader.setFloat("light.linear", 0.09f);
+        cubeShader.setFloat("light.quadratic", 0.032f);
 
         // view & projection transformation
         glm::mat4 projection =
@@ -213,6 +217,8 @@ int main()
         glm::mat4 view = camera.GetViewMatrix();
         cubeShader.setMat4("view", view);
 
+        glm::mat4 model = glm::mat4(1.0f);
+
         // bin texture
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, diffuseMap);
@@ -221,10 +227,10 @@ int main()
         glBindTexture(GL_TEXTURE_2D, specularMap);
 
         // world transformation
-        glm::mat4 model = glm::mat4(1.0f);
         glBindVertexArray(cubeVAO);
 
-        for (unsigned int i = 0; i < 9; i++) {
+        for (unsigned int i = 0; i < 10; i++) {
+            model = glm::mat4(1.0f);
             model = glm::translate(model, cubePositions[i]);
             float angle = 20.0f * i;
             model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
