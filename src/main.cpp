@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "camera.hpp"
+#include "mesh.hpp"
 #include "shader.hpp"
 
 #define NR_ELEMS(x) (sizeof(x) / sizeof((x)[0]))
